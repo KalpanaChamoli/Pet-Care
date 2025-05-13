@@ -22,8 +22,21 @@ app.enable('trust proxy');
 
 console.log('REMOTE: ', process.env.REMOTE);
 
-app.use(cors({ credentials: true, origin: process.env.REMOTE })); // <- CORS configuration, in case if you wanted to implemented authorization
-app.options(process.env.REMOTE, cors());
+const allowedOrigins = [process.env.REMOTE, 'http://localhost:3000'];   //have made changes here
+
+app.use(cors({                                                
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
+
+app.options('*', cors());// i have made changes here 
+
 
 console.log((`ENV = ${process.env.NODE_ENV}`));
 app.use(morgan('dev')); // <- Logs res status code and time taken
@@ -40,7 +53,7 @@ app.use('/api/v1', limiter);
 app.use((req, res, next) => {	// <- Serves req time and cookies
 	
 	req.requestTime = new Date().toISOString();
-	console.log(req.requestTime);
+	console.log(`[${req.method}] ${req.originalUrl} at ${req.requestTime}`);//i have made changes onit 
 	if (req.cookies) console.log(req.cookies);
 	next();
 });
